@@ -31,10 +31,10 @@ export class UsersService {
         });
     }
     
-    async findUser(id: number){
+    async findUser(id: string){
         const existingUser = await this.prisma.user.findUnique({
             where: {
-                id 
+                id: parseInt(id) 
             },
             select: {
                 email: true,
@@ -82,6 +82,8 @@ export class UsersService {
     }
 
     async attachUserToPost(userId: string, taskId: string){
+        
+        
         const getUser = this.prisma.user.update({
             where: {
                 id: parseInt(userId)
@@ -98,7 +100,7 @@ export class UsersService {
             }
         });
 
-        return getUser
+        return getUser;
     }
 
 

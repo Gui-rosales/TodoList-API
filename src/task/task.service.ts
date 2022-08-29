@@ -137,9 +137,6 @@ export class TaskService {
       },
       data: {
         status: 'FINISHED',
-        responsibleUser: {
-          disconnect: true,
-        },
       },
     });
     return this.deleteTask(parseInt(id));
