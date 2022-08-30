@@ -23,6 +23,4 @@ export class UsersController {
     userCreateANewPost(@Param('userId') userId: string, @Param('taskId') taskId: string){
         return this.userService.attachUserToPost(userId, taskId);
     }
-
-
 }
