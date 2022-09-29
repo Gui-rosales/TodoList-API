@@ -64,27 +64,33 @@ export class TaskService {
       throw new HttpException('Task was not found', HttpStatus.NOT_FOUND);
     }
 
-    return this.prisma.task.delete({
+    const deletedTask = await this.prisma.task.delete({
       where: {
         id,
       },
     });
+
+    return {deletedTask, msg: "task deleted"}
   }
 
-  async attachUserToTask(taskId: string, userId: string) {
+  async attachUserToTask(taskId: number, userId: number) {
     return this.prisma.task.update({
       where: {
-        id: parseInt(taskId),
+        id: taskId,
       },
       data: {
         responsibleUser: {
           connect: {
-            id: parseInt(userId),
+            id: userId,
           },
         },
       },
       include: {
-        responsibleUser: true,
+        responsibleUser: {
+          select: {
+            email: true
+          }
+        }
       },
     });
   }
@@ -110,17 +116,21 @@ export class TaskService {
           },
         },
         include: {
-          responsibleUser: true,
-        },
+          responsibleUser: {
+            select: {
+              email: true
+            }
+          }
+        }
       });
       return createdTask;
     }
   }
 
-  async deleteAttachedUser(taskId: string) {
+  async deleteAttachedUser(taskId: number) {
     return this.prisma.task.update({
       where: {
-        id: parseInt(taskId),
+        id: taskId,
       },
       data: {
         responsibleUser: {
@@ -130,15 +140,15 @@ export class TaskService {
     });
   }
 
-  async setStatusState(id: string) {
+  async setStatusState(id: number) {
     const updateTaskStatus = await this.prisma.task.update({
       where: {
-        id: parseInt(id),
+        id: id,
       },
       data: {
         status: 'FINISHED',
       },
     });
-    return this.deleteTask(parseInt(id));
+    return this.deleteTask(id);
   }
 }

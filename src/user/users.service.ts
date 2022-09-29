@@ -7,104 +7,124 @@ const saltRounds = 10;
 
 @Injectable()
 export class UsersService {
-    constructor (private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) {}
 
-    async createUser(CreateUserDTO: CreateUserDTO): Promise<any>{
-        const {password, email} = CreateUserDTO;
-        const existingUser = await this.prisma.user.findUnique({
-            where: {
-                email
-            }
-        });
+  async createUser(CreateUserDTO: CreateUserDTO): Promise<any> {
+    const { password, email } = CreateUserDTO;
+    const existingUser = await this.prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
 
-        if (existingUser){
-            throw new HttpException("User already exists", HttpStatus.UNAUTHORIZED);
-        }
-
-        const hashedPassword = await bcrypt.hash( password, saltRounds );
-        
-        return await this.prisma.user.create({
-           data: {
-            email: email,
-            password: hashedPassword
-           }
-        });
-    }
-    
-    async findUser(id: string){
-        const existingUser = await this.prisma.user.findUnique({
-            where: {
-                id: parseInt(id) 
-            },
-            select: {
-                email: true,
-                role: true,
-                task: {
-                    select: {
-                        title: true,
-                        description: true,
-                        status: true
-                    }
-                }
-            }
-        });
-
-        if(!existingUser){
-            throw new HttpException('User was not found', HttpStatus.NOT_FOUND);
-        }
-        return existingUser;
+    if (existingUser) {
+      throw new HttpException('User already exists', HttpStatus.UNAUTHORIZED);
     }
 
-    async updateUser(id: number, data: updateUserDTO): Promise <any>{
-        const existingUser = await this.prisma.user.update({
-            data,
-            where: {
-                id
-            }
-        });
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    return await this.prisma.user.create({
+      data: {
+        email: email,
+        password: hashedPassword,
+      },
+    });
+  }
+
+  async getAllUsers(){
+    return this.prisma.user.findMany({
+      include: {
+        task: true
+      }
+    });
+  }
+
+  async findUser(email: string) {
+    const existingUser = await this.prisma.user.findUnique({
+      where: {
+        email: email,
+      },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        role: true,
+      },
+    });
+
+    if (!existingUser) {
+      throw new HttpException('User was not found', HttpStatus.NOT_FOUND);
     }
-    async deleteUser(id: number){
-        const existingUser = await this.prisma.user.findUnique({
-            where: {
-                id
-            }
-        });
+    return existingUser;
+  }
 
-        if(existingUser){
-            return this.prisma.user.delete({
-                where: {
-                    id
-                }
-            });
-        } else {
-            throw new HttpException('User was not found', HttpStatus.NOT_FOUND);
-        }
+  async findUserWithTask(id: string) {
+    const existingUser = await this.prisma.user.findUnique({
+      where: {
+        id: parseInt(id),
+      },
+      select: {
+        email: true,
+        role: true,
+        task: {
+          select: {
+            title: true,
+            description: true,
+            status: true,
+          },
+        },
+      },
+    });
+
+    if (!existingUser) {
+      throw new HttpException('User was not found', HttpStatus.NOT_FOUND);
     }
+    return existingUser;
+  }
 
-    async attachUserToPost(userId: string, taskId: string){
-        
-        
-        const getUser = this.prisma.user.update({
-            where: {
-                id: parseInt(userId)
-            },
-            data: {
-                task: {
-                    connect: {
-                        id: parseInt(taskId)
-                    }
-                }
-            },
-            include: {
-                task: true
-            }
-        });
+  async updateUser(id: number, data: updateUserDTO): Promise<any> {
+    const existingUser = await this.prisma.user.update({
+      data,
+      where: {
+        id,
+      },
+    });
+  }
+  async deleteUser(id: number) {
+    const existingUser = await this.prisma.user.findUnique({
+      where: {
+        id,
+      },
+    });
 
-        return getUser;
+    if (existingUser) {
+      return this.prisma.user.delete({
+        where: {
+          id,
+        },
+      });
+    } else {
+      throw new HttpException('User was not found', HttpStatus.NOT_FOUND);
     }
+  }
 
+  async attachUserToPost(userId: number, taskId: number) {
+    const getUser = this.prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        task: {
+          connect: {
+            id: taskId,
+          },
+        },
+      },
+      include: {
+        task: true,
+      },
+    });
 
-
-
-
+    return getUser;
+  }
 }

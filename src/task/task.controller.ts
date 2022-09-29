@@ -4,62 +4,84 @@ import {
   Post,
   Body,
   Get,
-  Patch,
   Delete,
   Put,
+  UseGuards,
 } from '@nestjs/common';
 import { CreateTaskDTO, UpdateTaskDTO } from './dto/createTask.dto';
 import { TaskService } from './task.service';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/roles.guard';
+import { Role } from 'src/user/dto/role.enum';
+import { Roles } from 'src/auth/roles.decorator';
 
-@Controller('task')
+@Controller('tasks')
 export class TaskController {
   constructor(private readonly taskService: TaskService) {}
 
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Post('/createTask')
   createTaskWithUser(@Body() data: CreateTaskDTO) {
     return this.taskService.createTask(data);
   }
 
+  @Roles(Role.Admin, Role.Worker)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Get('/getTasks')
   findManyTasks() {
     return this.taskService.findAllTheTasks();
   }
-
-  @Get('/getTasks/:id')
-  findOneTask(@Param() id: number) {
-    return this.taskService.findTaskById(id);
+  
+  @Roles(Role.Admin, Role.Worker)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Get('/getTask/:taskId')
+  findOneTask(@Param("taskId") taskId: string) {
+    return this.taskService.findTaskById(+taskId);
   }
 
-  @Patch('/updateTask/:id')
-  updateTask(@Param() id: number, @Body() data: UpdateTaskDTO) {
-    return this.taskService.updateTasksInformation(id, data);
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Put('/updateTask/:taskId')
+  updateTask(@Param("taskId") taskId: string, @Body() data: UpdateTaskDTO) {
+    return this.taskService.updateTasksInformation(+taskId, data);
   }
 
-  @Delete('/deleteTask/:id')
-  deleteTask(@Param() id: number) {
-    return this.taskService.deleteTask(id);
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Delete('/deleteTask/:taskId')
+  deleteTask(@Param("taskId") taskId: string) {
+    return this.taskService.deleteTask(+taskId);
   }
 
-  @Put('/attach/:taskId/:userId')
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Put('/attachUser/:taskId/:userId')
   attachUser(@Param('taskId') taskId: string, @Param('userId') userId: string) {
-    return this.taskService.attachUserToTask(taskId, userId);
+    return this.taskService.attachUserToTask(+taskId, +userId);
   }
 
-  @Post('/taskwithuser/:userId')
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Post('/newTaskWithUserAttached/:userId')
   createTaskWithUserAttached(
-    @Param('userId') userId: number,
+    @Param('userId') userId: string,
     @Body() data: CreateTaskDTO,
   ) {
-    return this.taskService.createTaskWithUserAttached(userId, data);
+    return this.taskService.createTaskWithUserAttached(+userId, data);
   }
 
-  @Put('/dettachUser/:taskId')
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Put('/dettachUserFromTask/:taskId')
   dettachUserFromTask(@Param('taskId') taskId: string) {
-    return this.taskService.deleteAttachedUser(taskId);
+    return this.taskService.deleteAttachedUser(+taskId);
   }
 
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Put('/updateTaskStatus/:taskId')
   updateTaskStatus(@Param('taskId') taskId: string) {
-    return this.taskService.setStatusState(taskId);
+    return this.taskService.setStatusState(+taskId);
   }
 }
